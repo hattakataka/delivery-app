@@ -3,8 +3,11 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = path.join(__dirname, 'data.json');
 const PUBLIC_DIR = path.join(__dirname, 'public');
+
+// Renderの環境変数からSupabaseの設定を取得
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
 
 const MIME_TYPES = {
   '.html': 'text/html; charset=UTF-8',
@@ -13,30 +16,67 @@ const MIME_TYPES = {
   '.json': 'application/json',
 };
 
-const server = http.createServer((req, res) => {
-  // API: データの読み込み・保存
+const server = http.createServer(async (req, res) => {
+  // API: Supabaseからデータの読み込み・保存
   if (req.url === '/api/data') {
-    if (req.method === 'GET') {
-      if (!fs.existsSync(DATA_FILE)) {
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        return res.end(JSON.stringify({ items: {}, history: [] }));
-      }
-      const data = fs.readFileSync(DATA_FILE, 'utf8');
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(data || '{"items":{},"history":[]}');
+    if (!SUPABASE_URL || !SUPABASE_KEY) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ error: 'Supabaseの環境変数が設定されていません' }));
     }
 
+    const supabaseHeaders = {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json'
+    };
+
+    // データ取得 (GET)
+    if (req.method === 'GET') {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/app_data?id=eq.1&select=content`, {
+          headers: supabaseHeaders
+        });
+        const data = await response.json();
+        
+        if (Array.isArray(data) && data.length > 0 && data[0].content) {
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify(data[0].content));
+        }
+
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ items: {}, history: [] }));
+      } catch (err) {
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        return res.end(JSON.stringify({ error: 'DB取得失敗' }));
+      }
+    }
+
+    // データ保存 (POST)
     if (req.method === 'POST') {
       let body = '';
       req.on('data', chunk => { body += chunk.toString(); });
-      req.on('end', () => {
+      req.on('end', async () => {
         try {
-          fs.writeFileSync(DATA_FILE, body, 'utf8');
-          res.writeHead(200, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ success: true }));
+          const contentJson = JSON.parse(body);
+          
+          const response = await fetch(`${SUPABASE_URL}/rest/v1/app_data`, {
+            method: 'POST',
+            headers: {
+              ...supabaseHeaders,
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({ id: 1, content: contentJson })
+          });
+
+          if (response.ok) {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({ success: true }));
+          } else {
+            throw new Error('Supabase save failed');
+          }
         } catch (err) {
           res.writeHead(500, { 'Content-Type': 'application/json' });
-          res.end(JSON.stringify({ error: '保存に失敗しました' }));
+          res.end(JSON.stringify({ error: '保存失敗' }));
         }
       });
       return;
@@ -60,8 +100,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`--------------------------------------------------`);
-  console.log(` 配送管理サーバーが起動しました！`);
-  console.log(` http://localhost:${PORT} または サーバーのIP:${PORT} にアクセスしてください。`);
-  console.log(`--------------------------------------------------`);
+  console.log(`Server running on port ${PORT}`);
 });
