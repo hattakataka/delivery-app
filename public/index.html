@@ -76,9 +76,40 @@
   .modal { background:#fff; width:min(700px,100%); max-height:90vh; overflow:auto; border-radius:12px; padding:18px; }
   .modal-head { display:flex; justify-content:space-between; align-items:center; }
   .close { border:0; font-size:22px; cursor:pointer; }
-  @media(max-width:900px) {
-    .grid { grid-template-columns:1fr; }
-    .stats { grid-template-columns:repeat(2,1fr); }
+  
+  .card-header-status { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:14px; }
+  .header-actions { display:flex; gap:8px; flex-wrap:wrap; }
+
+  /* スマホ最適化用スタイル (配送を記録・現在の物品状況) */
+  @media(max-width:768px) {
+    header { flex-direction:column; align-items:flex-start; gap:12px; padding:14px 16px; }
+    header > div { width:100%; flex-wrap:wrap; gap:6px; }
+    main { padding:0 10px 20px; margin:10px auto; }
+    .grid { grid-template-columns:1fr; gap:12px; }
+    .stats { grid-template-columns:repeat(2,1fr); gap:8px; }
+    .stat { padding:10px; }
+    .stat .n { font-size:20px; }
+
+    /* 「配送を記録」エリアの最適化 */
+    .tabs { display:flex; gap:6px; }
+    .tab { flex:1; text-align:center; padding:10px 4px; font-size:13px; font-weight:600; }
+    .method { grid-template-columns:1fr 1fr; gap:6px; }
+    .method label { padding:10px 8px; font-size:13px; display:flex; align-items:center; }
+    .item-row { gap:4px; }
+    .item-row input:first-child { flex:0 0 85px; padding:10px 8px; font-size:14px; }
+    .item-row input:nth-child(2) { flex:1; padding:10px 8px; font-size:14px; }
+    .item-row button { height:42px; width:36px; padding:0; display:flex; align-items:center; justify-content:center; font-size:16px; }
+    .actions { flex-direction:column; gap:8px; }
+    .actions button { width:100%; padding:12px; font-size:14px; font-weight:bold; }
+
+    /* 「現在の物品状況」エリアの最適化 */
+    .card-header-status { flex-direction:column; align-items:stretch; gap:10px; }
+    .header-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; width:100%; }
+    .header-actions button { width:100%; padding:9px 4px; font-size:12px; }
+    .search input { padding:10px; font-size:14px; }
+    .search button { padding:10px 14px; font-size:13px; }
+    #itemsTable th, #itemsTable td { padding:10px 6px; font-size:12px; }
+    #itemsTable button.small { padding:6px 8px; font-size:12px; }
   }
 </style>
 </head>
@@ -132,16 +163,16 @@
             <label><input type="radio" name="method" value="業者・人間輸送"> 業者・人間輸送</label>
             <label><input type="radio" name="method" value="トラック輸送"> トラック輸送</label>
             <label><input type="radio" name="method" value="その他" onchange="toggleCustomMethod()"> その他</label>
-            <input id="customMethod" style="display:none;margin-top:2px;" placeholder="移動方法を入力">
           </div>
+          <input id="customMethod" style="display:none;margin-top:6px;" placeholder="移動方法を入力">
 
           <label>出発する物品 / 箱</label>
           <div id="itemInputs" class="items"></div>
           <div class="hint">※箱を指定すると、その箱に入っている物品も一緒に輸送中になります。</div>
 
           <div class="actions">
-            <button onclick="addItemRow()">＋物品を追加</button>
             <button class="primary" onclick="recordDeparture()">107室から出発を記録</button>
+            <button onclick="addItemRow()">＋物品を追加</button>
             <button onclick="clearForm()">入力をクリア</button>
           </div>
         </div>
@@ -152,19 +183,19 @@
           <div class="hint">※箱を到着させると、箱に入っている物品も一緒に到着処理されます。</div>
 
           <div class="actions">
-            <button onclick="addArrivalRow()">＋物品を追加</button>
             <button class="primary" onclick="recordArrival()">324室への到着を記録</button>
+            <button onclick="addArrivalRow()">＋物品を追加</button>
             <button onclick="clearArrivalForm()">入力をクリア</button>
           </div>
         </div>
       </section>
 
       <section class="card">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;">
+        <div class="card-header-status">
           <h2 style="margin:0;">現在の物品状況</h2>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button type="button" onclick="openAdd107Modal()">＋107室にある物品を追加</button>
-            <button type="button" onclick="openAddAt324()">＋324室にある物品を追加</button>
+          <div class="header-actions">
+            <button type="button" onclick="openAdd107Modal()">＋107室の物品追加</button>
+            <button type="button" onclick="openAddAt324()">＋324室の物品追加</button>
           </div>
         </div>
         <div class="search">
@@ -204,7 +235,7 @@
   </main>
 </div>
 
-<div class="modal-back" id="modalBack">
+<div class="modal-back" id="modalBack" onclick="if(event.target===this)closeModal()">
   <div class="modal">
     <div class="modal-head">
       <h2 id="modalTitle">物品詳細</h2>
@@ -214,7 +245,7 @@
   </div>
 </div>
 
-<div id="add107Modal" class="modal-back">
+<div id="add107Modal" class="modal-back" onclick="if(event.target===this)closeAdd107Modal()">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;">107室にある物品を追加</h2>
@@ -232,7 +263,7 @@
   </div>
 </div>
 
-<div id="add324Modal" class="modal-back">
+<div id="add324Modal" class="modal-back" onclick="if(event.target===this)closeAddAt324()">
   <div class="modal">
     <div class="modal-head">
       <h2 style="margin:0;">324室にある物品を追加</h2>
@@ -255,7 +286,6 @@ let db = { items: {}, history: [] };
 let historyFilter = "all";
 let currentUser = "";
 
-// サーバーからデータを読み込む関数の共通化
 async function loadDataFromServer() {
   try {
     const res = await fetch('/api/data');
@@ -263,7 +293,6 @@ async function loadDataFromServer() {
     if (!db.items) db.items = {};
     if (!db.history) db.history = [];
     
-    // データが空なら初期セットを自動注入
     if (Object.keys(db.items).length === 0) {
       seedInitialInventory(true);
     } else {
@@ -275,7 +304,6 @@ async function loadDataFromServer() {
   }
 }
 
-// サーバーへデータを保存する関数
 async function save() {
   try {
     await fetch('/api/data', {
@@ -505,6 +533,10 @@ function escAttr(s) {
   return String(s || "").replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 }
 
+function esc(s) {
+  return String(s || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
 function findItemByInput(number, name) {
   if (number) return db.items[itemKey(number, name)] || null;
   const target = String(name).trim().toLowerCase();
@@ -710,301 +742,203 @@ function render() {
   const tbody = document.getElementById("itemsTable");
   tbody.innerHTML = items.length ? items.map(x => `
     <tr>
-      <td>${esc(x.number || "?")}</td>
-      <td class="truncate" title="${escAttr(x.name || '')}">${esc(x.name || "?")}</td>
+      <td>${esc(x.number || "-")}</td>
+      <td class="truncate" title="${escAttr(x.name || '')}">${esc(x.name || "-")}</td>
       <td><span class="badge ${x.status==="輸送中"?"blue":(x.status==="到着済み"?"red":"green")}">${esc(x.status || "未出発")}</span></td>
-      <td>${esc(x.currentLocation || "?")}</td>
-      <td>${esc(x.method || "?")}</td>
+      <td class="truncate">${esc(x.currentLocation || "-")}</td>
+      <td class="truncate">${esc(x.method || "-")}</td>
       <td>${fmt(x.updatedAt)}</td>
       <td>
         <div class="btn-group">
-          <button class="small" onclick="showItem('${escJs(x.id)}')">履歴</button>
-          <button class="small" onclick="editItem('${escJs(x.id)}')">編集</button>
-          <button class="small danger" onclick="deleteItem('${escJs(x.id)}')">消去</button>
+          <button class="small" onclick="openDetailModal('${escAttr(x.id)}')">詳細</button>
         </div>
       </td>
-    </tr>`).join("") : `<tr><td colspan="7" class="empty">該当する物品はありません</td></tr>`;
+    </tr>
+  `).join("") : `<tr><td colspan="7" class="empty">該当する物品はありません</td></tr>`;
 
-  let hs = [...db.history].sort((a,b)=>new Date(b.timestamp)-new Date(a.timestamp));
-  if (historyFilter === "create") {
-    hs = hs.filter(h => h.type === "create");
-  } else if (historyFilter === "delivery") {
-    hs = hs.filter(h => h.type === "departure" || h.type === "arrival");
+  const allItems = Object.values(db.items);
+  document.getElementById("statItems").textContent = allItems.length;
+  document.getElementById("statMoved").textContent = db.history.length;
+  document.getElementById("statMoving").textContent = allItems.filter(x => x.status === "輸送中").length;
+  
+  const locSet = new Set(allItems.map(x => x.currentLocation).filter(Boolean));
+  document.getElementById("statLocations").textContent = locSet.size;
+
+  renderHistory();
+}
+
+function setHistoryFilter(filter) {
+  historyFilter = filter;
+  document.querySelectorAll("#historyTabs .tab").forEach(t => t.classList.remove("active"));
+  if (filter === 'all') document.getElementById("tabAll").classList.add("active");
+  if (filter === 'create') document.getElementById("tabCreate").classList.add("active");
+  if (filter === 'delivery') document.getElementById("tabDelivery").classList.add("active");
+  renderHistory();
+}
+
+function renderHistory() {
+  const tbody = document.getElementById("historyTable");
+  if (!tbody) return;
+
+  let list = [...db.history].reverse();
+  if (historyFilter === 'create') {
+    list = list.filter(h => h.type === 'create');
+  } else if (historyFilter === 'delivery') {
+    list = list.filter(h => h.type === 'departure' || h.type === 'arrival');
   }
 
-  const ht = document.getElementById("historyTable");
-  ht.innerHTML = hs.length ? hs.map(h => {
-    let typeBadge = "";
-    if (h.type === "create") typeBadge = `<span class="badge purple">物品追加</span>`;
-    else if (h.type === "departure") typeBadge = `<span class="badge blue">${esc(h.method || '出発')}</span>`;
-    else if (h.type === "arrival") typeBadge = `<span class="badge red">到着 ${esc(h.method || '')}</span>`;
-
-    return `
+  tbody.innerHTML = list.length ? list.map(h => `
     <tr>
       <td>${fmt(h.timestamp)}</td>
-      <td><b>${esc(h.user || "?")}</b></td>
-      <td><b>${esc(h.number || "番号なし")}</b><br>${esc(h.name || "")}</td>
-      <td>${esc(h.from)}</td>
-      <td>${esc(h.to)}</td>
-      <td>${typeBadge}</td>
+      <td>${esc(h.user || "-")}</td>
+      <td>${esc((h.number ? h.number + ' ' : '') + h.name)}</td>
+      <td>${esc(h.from || "-")}</td>
+      <td>${esc(h.to || "-")}</td>
+      <td>${esc(h.type === 'create' ? '新規追加' : (h.method || (h.type==='departure'?'出発':'到着')))}</td>
       <td>
-        <div class="btn-group">
-          <button class="small" onclick="editHistory('${escJs(h.id)}')">編集</button>
-          <button class="small danger" onclick="deleteHistory('${escJs(h.id)}')">削除</button>
-        </div>
+        <button class="small danger" onclick="deleteHistory('${escAttr(h.id)}')">削除</button>
       </td>
-    </tr>`;
-  }).join("") : `<tr><td colspan="7" class="empty">対象の履歴はありません</td></tr>`;
-
-  const locations = new Set(Object.values(db.items).map(x=>x.currentLocation).filter(Boolean));
-  document.getElementById("statItems").textContent = Object.keys(db.items).length;
-  document.getElementById("statMoved").textContent = db.history.length;
-  document.getElementById("statMoving").textContent = Object.values(db.items).filter(x=>x.status==="輸送中").length;
-  document.getElementById("statLocations").textContent = locations.size;
+    </tr>
+  `).join("") : `<tr><td colspan="7" class="empty">履歴はありません</td></tr>`;
 }
 
-function esc(s) {
-  return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
-}
-function escJs(s) {
-  return String(s).replace(/\\/g,"\\\\").replace(/'/g,"\\'");
-}
-
-function setHistoryFilter(v) {
-  historyFilter = v;
-  document.querySelectorAll("#historyTabs .tab").forEach(x => x.classList.remove("active"));
-  if (v === "all") document.getElementById("tabAll").classList.add("active");
-  if (v === "create") document.getElementById("tabCreate").classList.add("active");
-  if (v === "delivery") document.getElementById("tabDelivery").classList.add("active");
-  render();
+function deleteHistory(historyId) {
+  if (!confirm("この履歴を削除しますか？\n（関連する物品の最新ステータスが再計算されます）")) return;
+  const idx = db.history.findIndex(h => h.id === historyId);
+  if (idx !== -1) {
+    const item = db.items[db.history[idx].itemId];
+    db.history.splice(idx, 1);
+    if (item) {
+      recalculateItemState(item.id);
+    }
+    save();
+  }
 }
 
-function deleteItem(id) {
-  const item = db.items[id];
+function openDetailModal(itemId) {
+  const item = db.items[itemId];
   if (!item) return;
-  const label = item.number ? `${item.number} (${item.name})` : item.name;
-  if (confirm(`「${label}」を消去しますか？\n※関連する移動履歴も削除されます。`)) {
-    delete db.items[id];
-    db.history = db.history.filter(h => h.itemId !== id);
-    save();
-  }
-}
 
-function deleteHistory(id) {
-  const h = db.history.find(x => x.id === id);
-  if (!h) return;
+  document.getElementById("modalTitle").textContent = `${item.number ? '[' + item.number + '] ' : ''}${item.name}`;
+  
+  const itemHistories = db.history
+    .filter(h => h.itemId === itemId)
+    .sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
 
-  if (confirm("この履歴を削除しますか？\n（物品の現在の状況も自動再計算されます）")) {
-    const itemId = h.itemId;
-    db.history = db.history.filter(x => x.id !== id);
-    recalculateItemState(itemId);
-    save();
-  }
-}
-
-function getUniqueLocations() {
-  const set = new Set(["107室", "324室", "輸送中", "未確認", "?"]);
-  Object.values(db.items).forEach(x => {
-    if (x.currentLocation) set.add(x.currentLocation);
-    if (x.initialLocation) set.add(x.initialLocation);
-  });
-  db.history.forEach(h => {
-    if (h.from) set.add(h.from);
-    if (h.to) set.add(h.to);
-  });
-  return Array.from(set);
-}
-
-function getUniqueMethods() {
-  const set = new Set(["新規追加", "手運び", "業者・人間輸送", "トラック輸送", "その他", "?"]);
-  Object.values(db.items).forEach(x => { if (x.method) set.add(x.method); });
-  db.history.forEach(h => { if (h.method) set.add(h.method); });
-  return Array.from(set);
-}
-
-function editHistory(id) {
-  const h = db.history.find(x => x.id === id);
-  if (!h) return;
-
-  const dt = new Date(h.timestamp);
-  const localIso = new Date(dt.getTime() - (dt.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-
-  const locs = getUniqueLocations();
-  const methods = getUniqueMethods();
-
-  const makeOptions = (arr, selected) => {
-    return arr.map(v => `<option value="${escAttr(v)}" ${v === selected ? 'selected' : ''}>${esc(v)}</option>`).join('');
-  };
-
-  document.getElementById("modalTitle").textContent = "履歴の編集";
-  document.getElementById("modalBody").innerHTML = `
-    <label>担当者（ユーザー名）</label>
-    <input id="editHistUser" value="${escAttr(h.user || '')}">
-    <label>対象物品</label>
-    <input value="${escAttr((h.number ? h.number + ' ' : '') + h.name)}" disabled style="background:#f3f4f6;">
-    <label>日時</label>
-    <input type="datetime-local" id="editHistTime" value="${localIso}">
-    <label>区分</label>
-    <select id="editHistType">
-      <option value="create" ${h.type==='create'?'selected':''}>物品追加</option>
-      <option value="departure" ${h.type==='departure'?'selected':''}>出発</option>
-      <option value="arrival" ${h.type==='arrival'?'selected':''}>到着</option>
-    </select>
-    <label>出発地 / 区分</label>
-    <select id="editHistFrom">${makeOptions(locs, h.from)}</select>
-    <label>到着地 / 追加先</label>
-    <select id="editHistTo">${makeOptions(locs, h.to)}</select>
-    <label>移動方法 / 詳細</label>
-    <select id="editHistMethod">${makeOptions(methods, h.method)}</select>
-    <div class="actions" style="margin-top:16px;">
-      <button class="primary" onclick="saveHistoryEdit('${escJs(id)}')">保存</button>
-      <button onclick="closeModal()">キャンセル</button>
+  let html = `
+    <div style="margin-bottom:16px; font-size:14px; line-height:1.6;">
+      <p><strong>現在の状態:</strong> <span class="badge ${item.status==="輸送中"?"blue":(item.status==="到着済み"?"red":"green")}">${esc(item.status)}</span></p>
+      <p><strong>現在地:</strong> ${esc(item.currentLocation)}</p>
+      <p><strong>移動方法:</strong> ${esc(item.method || "-")}</p>
+      <p><strong>出発日時:</strong> ${fmt(item.departureAt)}</p>
+      <p><strong>到着日時:</strong> ${fmt(item.arrivalAt)}</p>
     </div>
-  `;
-  openModal();
-}
-
-function saveHistoryEdit(id) {
-  const h = db.history.find(x => x.id === id);
-  if (!h) return;
-
-  const timeVal = document.getElementById("editHistTime").value;
-  if (!timeVal) { alert("日時を入力してください。"); return; }
-
-  h.user = document.getElementById("editHistUser").value.trim();
-  h.timestamp = new Date(timeVal).toISOString();
-  h.type = document.getElementById("editHistType").value;
-  h.from = document.getElementById("editHistFrom").value.trim();
-  h.to = document.getElementById("editHistTo").value.trim();
-  h.method = document.getElementById("editHistMethod").value.trim();
-
-  recalculateItemState(h.itemId);
-  save();
-  closeModal();
-}
-
-function editItem(id) {
-  const x = db.items[id];
-  document.getElementById("modalTitle").textContent = "物品情報を編集";
-  document.getElementById("modalBody").innerHTML = `
-    <label>番号</label>
-    <input id="editNumber" value="${escAttr(x.number)}">
-    <label>物品名</label>
-    <input id="editName" value="${escAttr(x.name)}">
-    <label>現在地</label>
-    <input id="editLocation" value="${escAttr(x.currentLocation)}">
-    <div class="actions">
-      <button class="primary" onclick="saveItemEdit('${escJs(id)}')">保存</button>
-      <button onclick="closeModal()">キャンセル</button>
-    </div>`;
-  openModal();
-}
-
-function saveItemEdit(id) {
-  const x = db.items[id];
-  x.number = document.getElementById("editNumber").value.trim();
-  x.name = document.getElementById("editName").value.trim() || "名称未設定";
-  x.currentLocation = document.getElementById("editLocation").value.trim();
-  x.updatedAt = new Date().toISOString();
-  save(); closeModal();
-}
-
-function showItem(id) {
-  const item = db.items[id];
-  const hs = db.history.filter(h=>h.itemId===id).sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));
-  document.getElementById("modalTitle").textContent = `${item.number || "番号なし"} ${item.name || ""}`;
-  document.getElementById("modalBody").innerHTML = `
-    <p><b>現在の状態：</b>${esc(item.status)}</p>
-    <p><b>現在地：</b>${esc(item.currentLocation)}</p>
+    <h3 style="font-size:15px;margin:12px 0 8px;">移動・登録履歴</h3>
     <div class="timeline">
-      ${hs.length ? hs.map(h=>{
-        let title = "更新";
-        if(h.type === "create") title = "物品追加";
-        else if(h.type === "departure") title = "出発";
-        else if(h.type === "arrival") title = "到着";
+  `;
 
-        return `
+  if (itemHistories.length === 0) {
+    html += `<div class="empty">履歴がありません</div>`;
+  } else {
+    for (const h of itemHistories) {
+      html += `
         <div class="event">
-          <div class="time">${fmt(h.timestamp)} (担当: ${esc(h.user || '未記録')})</div>
-          <b>${title}</b> (${esc(h.from)} →${esc(h.to)})
-        </div>`;
-      }).join("") : "<p>履歴なし</p>"}
-    </div>`;
-  openModal();
+          <div class="time">${fmt(h.timestamp)} (${esc(h.user || '不明')})</div>
+          <div><strong>${h.type === 'create' ? '【新規登録】' : (h.type === 'departure' ? '【出発】' : '【到着】')}</strong> ${esc(h.from)} ➔ ${esc(h.to)}</div>
+          ${h.method ? `<div style="font-size:12px;color:var(--muted);">方法: ${esc(h.method)}</div>` : ''}
+        </div>
+      `;
+    }
+  }
+
+  html += `</div>`;
+  document.getElementById("modalBody").innerHTML = html;
+  document.getElementById("modalBack").style.display = "flex";
 }
 
-function openModal(){ document.getElementById("modalBack").style.display="flex"; }
-function closeModal(){ document.getElementById("modalBack").style.display="none"; }
+function closeModal() {
+  document.getElementById("modalBack").style.display = "none";
+}
 
 function openAdd107Modal() {
-  document.getElementById('add107Number').value = '';
-  document.getElementById('add107Name').value = '';
-  document.getElementById('add107Modal').style.display = 'flex';
+  document.getElementById("add107Number").value = "";
+  document.getElementById("add107Name").value = "";
+  document.getElementById("add107Modal").style.display = "flex";
 }
+
 function closeAdd107Modal() {
-  document.getElementById('add107Modal').style.display = 'none';
+  document.getElementById("add107Modal").style.display = "none";
 }
 
 function addItemAt107() {
-  const number = document.getElementById('add107Number').value.trim();
-  const name = document.getElementById('add107Name').value.trim();
-  if(!number && !name) return;
+  const num = document.getElementById("add107Number").value.trim();
+  const name = document.getElementById("add107Name").value.trim();
+  if (!num && !name) { alert("番号または物品名を入力してください。"); return; }
 
-  const key = itemKey(number, name);
-  const stamp = new Date().toISOString();
+  const key = itemKey(num, name);
+  const now = new Date().toISOString();
+
+  if (db.items[key]) {
+    alert("既に登録されている物品です。");
+    return;
+  }
 
   db.items[key] = {
-    id: key, number: number, name: name || "名称未設定",
-    currentLocation: '107室', initialLocation: '107室', status: '未出発', method: '',
-    departureAt: null, arrivalAt: null, updatedAt: stamp
+    id: key, number: num, name: name || "名称未設定",
+    currentLocation: "107室", initialLocation: "107室", status: "未出発", method: "",
+    departureAt: null, arrivalAt: null, updatedAt: now, order: Object.keys(db.items).length
   };
 
   db.history.push({
-    id: String(Date.now() + Math.random()),
-    itemId: key, number: number, name: name || "名称未設定",
-    type: "create", from: "107室", to: "?", method: "新規追加", timestamp: stamp,
+    id: String(Date.now()+Math.random()), itemId: key, number: num,
+    name: name || "名称未設定", type: "create", from: "107室", to: "107室", method: "新規追加", timestamp: now,
     user: currentUser
   });
 
   save();
   closeAdd107Modal();
+  alert("107室に物品を追加しました。");
 }
 
-function openAddAt324(){
-  document.getElementById('add324Number').value = '';
-  document.getElementById('add324Name').value = '';
-  document.getElementById('add324Modal').style.display = 'flex';
-}
-function closeAddAt324(){
-  document.getElementById('add324Modal').style.display = 'none';
+function openAddAt324() {
+  document.getElementById("add324Number").value = "";
+  document.getElementById("add324Name").value = "";
+  document.getElementById("add324Modal").style.display = "flex";
 }
 
-function addItemAt324(){
-  const number = document.getElementById('add324Number').value.trim();
-  const name = document.getElementById('add324Name').value.trim();
-  if(!number && !name) return;
+function closeAddAt324() {
+  document.getElementById("add324Modal").style.display = "none";
+}
 
-  const key = itemKey(number, name);
-  const stamp = new Date().toISOString();
+function addItemAt324() {
+  const num = document.getElementById("add324Number").value.trim();
+  const name = document.getElementById("add324Name").value.trim();
+  if (!num && !name) { alert("番号または物品名を入力してください。"); return; }
+
+  const key = itemKey(num, name);
+  const now = new Date().toISOString();
+
+  if (db.items[key]) {
+    alert("既に登録されている物品です。");
+    return;
+  }
 
   db.items[key] = {
-    id: key, number: number, name: name || "名称未設定",
-    currentLocation: '324室', initialLocation: '324室', status: '到着済み', method: '',
-    departureAt: null, arrivalAt: stamp, updatedAt: stamp
+    id: key, number: num, name: name || "名称未設定",
+    currentLocation: "324室", initialLocation: "324室", status: "到着済み", method: "",
+    departureAt: null, arrivalAt: now, updatedAt: now, order: Object.keys(db.items).length
   };
 
   db.history.push({
-    id: String(Date.now() + Math.random()),
-    itemId: key, number: number, name: name || "名称未設定",
-    type: "create", from: "324室", to: "?", method: "新規追加", timestamp: stamp,
+    id: String(Date.now()+Math.random()), itemId: key, number: num,
+    name: name || "名称未設定", type: "create", from: "324室", to: "324室", method: "新規追加", timestamp: now,
     user: currentUser
   });
 
   save();
   closeAddAt324();
+  alert("324室に物品を追加しました。");
 }
-
-setMode('departure');
 </script>
 </body>
 </html>
